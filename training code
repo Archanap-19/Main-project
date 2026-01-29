@@ -1,0 +1,281 @@
+import tensorflow as tf
+gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+for device in gpu_devices: tf.config.experimental.set_memory_growth(device, True)
+
+
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPool2D, Dropout, GlobalAveragePooling2D, Dense
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping
+
+from PIL import Image, ImageChops, ImageEnhance
+from tqdm.notebook import tqdm
+
+#error level analysis
+
+def convert_to_ela_image(path, quality=90):
+    original = Image.open(path).convert("RGB")
+    temp = "temp_ela.jpg"
+    original.save(temp, "JPEG", quality=quality)
+    compressed = Image.open(temp)
+    ela = ImageChops.difference(original, compressed)
+    return ela
+
+
+#Dataset preparation
+def prepare_image(image_path):
+    image_size = (128, 128)
+    ela_image = convert_to_ela_image(image_path, 90)
+    ela_image = ela_image.resize(image_size)
+    return np.array(ela_image) / 255.0
+     #normalizing the array values obtained from input image
+
+
+X = [] # ELA converted images
+Y = [] # 0 for fake, 1 for real
+
+#adding authentic images
+
+path = 'dataset/real'       #folder path of the authentic images in the dataset
+for filename in tqdm(os.listdir(path),desc="Processing Images : "):
+    if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+        full_path = os.path.join(path, filename)
+        X.append(prepare_image(full_path))        
+        Y.append(1)     # label for authentic images 
+        
+
+#adding forged images
+
+path = 'dataset/forged'       #folder path of the forged images in the dataset
+for filename in tqdm(os.listdir(path),desc="Processing Images : "):
+    if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+        full_path = os.path.join(path, filename)
+        X.append(prepare_image(full_path))        
+        Y.append(0)     # label for forged images 
+        
+
+# Dataset Integrity Check
+print("Images loaded:", len(X))
+print("Labels loaded:", len(Y))
+
+
+# Convert to NumPy + Shuffle
+X = np.array(X)
+Y = np.array(Y)
+
+indices = np.arange(len(X))
+np.random.shuffle(indices)
+
+X = X[indices]
+Y = Y[indices]
+
+# Dataset formatting & class distribution
+
+# (ONLY reshape if prepare_image did NOT reshape already)
+X = X.reshape(-1, 128, 128, 3)
+
+unique, counts = np.unique(Y, return_counts=True)
+print("Dataset distribution:", dict(zip(unique, counts)))
+
+#partitioning datsaset for training,validation and testing
+
+# Training : Validation : Testing = 76 : 19 : 5
+X_temp, X_test, Y_temp, Y_test = train_test_split(X, Y, test_size = 0.05, random_state=5)
+X_train, X_val, Y_train, Y_val = train_test_split(X_temp, Y_temp, test_size = 0.2, random_state=5)
+
+print(f'Training images: {len(X_train)} , Training labels: {len(Y_train)}')
+print(f'Validation images: {len(X_val)} , Validation labels: {len(Y_val)}')
+print(f'Test images: {len(X_test)} , Test labels: {len(Y_test)}')
+
+
+#data agumentation
+datagen = ImageDataGenerator(
+    rotation_range=10,
+    width_shift_range=0.05,
+    height_shift_range=0.05,
+    zoom_range=0.1,
+    horizontal_flip=True
+)
+
+datagen.fit(X_train)
+
+
+class_weights = compute_class_weight(
+    class_weight='balanced',
+    classes=np.unique(Y_train),
+    y=Y_train
+)
+
+class_weights = dict(enumerate(class_weights))
+print("Class Weights:", class_weights)
+
+
+
+def build_model():
+    model = Sequential()
+
+    model.add(Conv2D(64, (5,5), activation='relu', input_shape=(128,128,3)))
+    model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(MaxPool2D((2,2)))
+    model.add(Dropout(0.25))   # ← ADD HERE
+
+    model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(MaxPool2D((2,2)))
+    model.add(Dropout(0.25))   # ← ADD HERE
+
+    model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(MaxPool2D((2,2)))
+    model.add(Dropout(0.25))   # ← ADD HERE
+
+    model.add(Conv2D(32, (5,5), activation='relu'))
+    model.add(MaxPool2D((2,2)))
+
+    model.add(GlobalAveragePooling2D())
+    model.add(Dense(1, activation='sigmoid'))
+
+    return model
+
+
+model = build_model()
+model.summary()
+
+
+#model training
+
+epochs = 15
+batch_size = 32
+
+#optimizer
+init_lr = 1e-4  # learning rate
+
+optimizer = Adam(learning_rate=init_lr)
+
+model.compile(
+    optimizer=optimizer,
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+
+
+#Early Stopping
+early_stopping = EarlyStopping(
+    monitor='val_accuracy',
+    patience=6,
+    restore_best_weights=True
+)
+
+hist = model.fit(
+    datagen.flow(X_train, Y_train, batch_size=batch_size),
+    epochs=epochs,
+    validation_data=(X_val, Y_val),
+    callbacks=[early_stopping],
+    class_weight=class_weights
+)
+
+# Save the trained model
+model.save('trainn_model.h5')
+
+# Get training history
+history_dict = hist.history
+
+# Save training history as JSON
+import json
+with open('training_history.json', 'w') as f:
+    json.dump(history_dict, f)
+
+
+#plotting and training curve
+
+plt.figure(figsize=(12,4))
+
+plt.subplot(1,2,1)
+plt.plot(hist.history['loss'], label='Train Loss')
+plt.plot(hist.history['val_loss'], label='Val Loss')
+plt.legend()
+plt.title('Loss')
+
+plt.subplot(1,2,2)
+plt.plot(hist.history['accuracy'], label='Train Accuracy')
+plt.plot(hist.history['val_accuracy'], label='Val Accuracy')
+plt.legend()
+plt.title('Accuracy')
+
+plt.show()
+
+# ---- STANDARD TEST ACCURACY (Keras default threshold = 0.5) ----
+loss, acc = model.evaluate(X_test, Y_test, verbose=0)
+print("Test Accuracy (model.evaluate):", acc * 100)
+
+
+#confusion matrix
+def plot_confusion_matrix(cf_matrix):
+  
+    group_counts = ["{0:0.0f}".format(value) for value in cf_matrix.flatten()] #number of images in each classification block
+    group_percentages = ["{0:.2%}".format(value) for value in cf_matrix.flatten()/np.sum(cf_matrix)] #percentage value of images in each block w.r.t total images
+
+    axes_labels=['Forged', 'Authentic']
+    labels = [f"{v1}\n{v2}" for v1, v2 in zip(group_counts,group_percentages)]
+    labels = np.asarray(labels).reshape(2,2)
+    sns.heatmap(cf_matrix, annot=labels, fmt='',cmap="flare" , xticklabels=axes_labels, yticklabels=axes_labels)
+
+    plot_xlabel = plt.xlabel('Predicted labels', fontsize = 13)
+    plot_ylabel = plt.ylabel('True labels', fontsize = 13)
+    plot_title = plt.title('Confusion Matrix', fontsize= 10,fontweight='bold')
+
+
+THRESHOLD = 0.65
+
+Y_pred = model.predict(X_val)
+Y_pred_classes = (Y_pred >= THRESHOLD).astype(int)
+Y_true = Y_val                             
+
+confusion_mtx = confusion_matrix(Y_true, Y_pred_classes)     # compute the confusion matrix
+plot_confusion_matrix(confusion_mtx)                         # plot the confusion matrix
+
+
+#classification report
+y_test_probs = model.predict(X_test)
+Y_test_pred = (y_test_probs >= THRESHOLD).astype(int)
+
+print("Test Classification Report")
+print(classification_report(Y_test, Y_test_pred, target_names=['Forged','Authentic']))
+
+
+#testing accuracy
+class_names = ['Forged', 'Authentic']
+
+
+test_image_path = r"dataset/real/Au_ani_00001.jpg"
+
+test_image = prepare_image(test_image_path)
+test_image = test_image.reshape(-1, 128, 128, 3)
+
+y_pred = model.predict(test_image)
+pred_value = y_pred[0][0]
+
+THRESHOLD = 0.65
+class_names = ['Forged', 'Authentic']
+
+if pred_value >= THRESHOLD:
+    prediction = "Authentic"
+    confidence = pred_value * 100
+else:
+    prediction = "Forged"
+    confidence = (1 - pred_value) * 100
+
+print("Prediction:", prediction)
+print(f"Confidence: {confidence:.2f}%")
+
+
