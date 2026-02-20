@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CEA Analysis | ForgeXplorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body
+class="min-h-screen bg-cover bg-center text-white flex items-center justify-center"
+style="background-image: url('/static/images/ceapic1.jpg');"
+>
+
+<div class="w-full max-w-5xl bg-white/10 backdrop-blur-xl rounded-3xl p-10 shadow-2xl">
+
+  <h2 class="text-4xl font-bold text-center mb-8">
+    🔍 Compression Error Analysis (CEA)
+  </h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- ORIGINAL IMAGE -->
+    <div>
+      <h3 class="text-xl font-semibold text-center mb-4">Original Image</h3>
+      <img
+        src="{{ url_for('static', filename=original_image) }}"
+        class="rounded-xl shadow-lg border border-white/20"
+      >
+    </div>
+
+    <!-- CEA IMAGE -->
+    <div>
+      <h3 class="text-xl font-semibold text-center mb-4">CEA Image</h3>
+      <img
+        src="{{ url_for('static', filename=cea_image) }}"
+        class="rounded-xl shadow-lg border border-white/20"
+      >
+    </div>
+
+  </div>
+
+  <!-- NEXT BUTTON -->
+  <div class="text-center mt-10">
+    <a href="{{ url_for('result', filename=filename) }}">
+      <button
+        class="px-10 py-4 rounded-full
+               bg-gradient-to-r from-cyan-400 to-purple-500
+               text-white font-semibold text-lg
+               hover:scale-110 transition duration-300 shadow-xl">
+        Analyze Result →
+      </button>
+    </a>
+  </div>
+
+  <!-- BACK -->
+  <div class="text-center mt-6">
+    <a href="/upload" class="text-gray-300 hover:text-white">
+      ← Upload another image
+    </a>
+  </div>
+
+</div>
+
+</body>
+</html>
