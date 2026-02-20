@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Result | ForgeXplorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body
+class="min-h-screen bg-cover bg-center text-white flex items-center justify-center"
+style="background-image: url('/static/images/result.jpg');"
+>
+
+<div class="w-full max-w-xl bg-white/10 backdrop-blur-xl rounded-3xl p-10 shadow-2xl text-center">
+
+  <h2 class="text-4xl font-bold mb-6">
+    🧠 Detection Result
+  </h2>
+
+  <!-- IMAGE -->
+  <img
+    src="{{ url_for('static', filename=image) }}"
+    class="mx-auto rounded-xl shadow-lg mb-6 border border-white/20"
+  >
+
+  <!-- PREDICTION -->
+  {% if prediction == "Authentic" %}
+    <div class="text-green-400 text-3xl font-bold mb-3">
+      ✅ Authentic Image
+    </div>
+  {% else %}
+    <div class="text-red-400 text-3xl font-bold mb-3">
+      🚨 Forged Image
+    </div>
+  {% endif %}
+
+  <!-- CONFIDENCE -->
+  <p class="text-xl text-gray-200 mb-6">
+    Confidence: <span class="font-semibold">{{ confidence }}</span>
+  </p>
+
+  <!-- ACTION BUTTONS -->
+  <div class="flex justify-center gap-6">
+
+    <a href="/upload">
+      <button
+        class="px-6 py-3 rounded-full
+               bg-cyan-500 text-black font-semibold
+               hover:scale-105 transition">
+        Upload Another
+      </button>
+    </a>
+
+    <a href="/">
+      <button
+        class="px-6 py-3 rounded-full
+               bg-white/10 text-white font-semibold
+               hover:bg-white/20 transition">
+        Home
+      </button>
+    </a>
+
+  </div>
+
+</div>
+
+</body>
+</html>
