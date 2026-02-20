@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Image | ForgeXplorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body
+class="min-h-screen flex items-center justify-center bg-cover bg-center text-white"
+style="background-image: url('/static/images/upload.jpg');"
+>
+
+<div class="w-full max-w-lg bg-white/10 backdrop-blur-xl rounded-3xl p-10 shadow-2xl">
+
+  <h2 class="text-4xl font-bold text-center mb-6">
+    Upload Image
+  </h2>
+
+  <p class="text-center text-gray-300 mb-8">
+    Upload an image to detect forgery
+  </p>
+
+  <form method="post" action="/upload" enctype="multipart/form-data" class="space-y-6">
+
+    <input
+      type="file"
+      name="image"
+      required
+      class="w-full text-gray-300
+             file:bg-cyan-500 file:text-black
+             file:px-4 file:py-2 file:rounded-full
+             file:border-none"
+    >
+
+    <button
+      type="submit"
+      class="w-full py-3 rounded-full
+             bg-gradient-to-r from-cyan-400 to-purple-500
+             text-white font-semibold text-lg
+             hover:scale-105 transition duration-300 shadow-lg">
+      Upload & Detect
+    </button>
+
+  </form>
+
+  <div class="text-center mt-6">
+    <a href="/" class="text-gray-400 hover:text-white">
+      ← Back to Home
+    </a>
+  </div>
+
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+</html>
