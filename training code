@@ -3,6 +3,7 @@ gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices: tf.config.experimental.set_memory_growth(device, True)
 
 
+
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -21,28 +22,51 @@ from keras.callbacks import EarlyStopping
 from PIL import Image, ImageChops, ImageEnhance
 from tqdm.notebook import tqdm
 
-#error level analysis
 
-def convert_to_ela_image(path, quality=90):
+
+
+def convert_to_cea_image(path, qualities=[95, 85, 75]):
     original = Image.open(path).convert("RGB")
-    temp = "temp_ela.jpg"
-    original.save(temp, "JPEG", quality=quality)
-    compressed = Image.open(temp)
-    ela = ImageChops.difference(original, compressed)
-    return ela
 
+    cea_maps = []
+
+    for q in qualities:
+        temp_path = f"temp_cea_{q}.jpg"
+        original.save(temp_path, "JPEG", quality=q)
+        compressed = Image.open(temp_path)
+
+        diff = ImageChops.difference(original, compressed)
+
+        # Normalize (VERY IMPORTANT)
+        extrema = diff.getextrema()
+        max_diff = max(e[1] for e in extrema) or 1
+        scale = 255.0 / max_diff
+        diff = ImageEnhance.Brightness(diff).enhance(scale)
+
+        cea_maps.append(np.array(diff))
+
+    # Average all CEA maps
+    cea_image = np.mean(cea_maps, axis=0)
+
+    return cea_image
 
 #Dataset preparation
 def prepare_image(image_path):
     image_size = (128, 128)
-    ela_image = convert_to_ela_image(image_path, 90)
-    ela_image = ela_image.resize(image_size)
-    return np.array(ela_image) / 255.0
+
+    cea_image = convert_to_cea_image(image_path)
+    cea_image = Image.fromarray(cea_image.astype(np.uint8))
+    cea_image = cea_image.resize(image_size)
+
+    return np.array(cea_image) / 255.0
+
      #normalizing the array values obtained from input image
 
 
 X = [] # ELA converted images
 Y = [] # 0 for fake, 1 for real
+
+
 
 #adding authentic images
 
@@ -63,6 +87,7 @@ for filename in tqdm(os.listdir(path),desc="Processing Images : "):
         X.append(prepare_image(full_path))        
         Y.append(0)     # label for forged images 
         
+
 
 # Dataset Integrity Check
 print("Images loaded:", len(X))
@@ -87,6 +112,8 @@ X = X.reshape(-1, 128, 128, 3)
 unique, counts = np.unique(Y, return_counts=True)
 print("Dataset distribution:", dict(zip(unique, counts)))
 
+
+
 #partitioning datsaset for training,validation and testing
 
 # Training : Validation : Testing = 76 : 19 : 5
@@ -110,6 +137,7 @@ datagen = ImageDataGenerator(
 datagen.fit(X_train)
 
 
+
 class_weights = compute_class_weight(
     class_weight='balanced',
     classes=np.unique(Y_train),
@@ -120,7 +148,7 @@ class_weights = dict(enumerate(class_weights))
 print("Class Weights:", class_weights)
 
 
-
+#model architecture
 def build_model():
     model = Sequential()
 
@@ -157,11 +185,14 @@ model.summary()
 epochs = 15
 batch_size = 32
 
+
 #optimizer
 init_lr = 1e-4  # learning rate
 
 optimizer = Adam(learning_rate=init_lr)
 
+
+#model training and complie
 model.compile(
     optimizer=optimizer,
     loss='binary_crossentropy',
@@ -176,6 +207,7 @@ early_stopping = EarlyStopping(
     restore_best_weights=True
 )
 
+
 hist = model.fit(
     datagen.flow(X_train, Y_train, batch_size=batch_size),
     epochs=epochs,
@@ -184,15 +216,17 @@ hist = model.fit(
     class_weight=class_weights
 )
 
+
+
 # Save the trained model
-model.save('trainn_model.h5')
+model.save('traine_model.h5')
 
 # Get training history
 history_dict = hist.history
 
 # Save training history as JSON
 import json
-with open('training_history.json', 'w') as f:
+with open('trainne_history.json', 'w') as f:
     json.dump(history_dict, f)
 
 
@@ -213,6 +247,7 @@ plt.legend()
 plt.title('Accuracy')
 
 plt.show()
+
 
 # ---- STANDARD TEST ACCURACY (Keras default threshold = 0.5) ----
 loss, acc = model.evaluate(X_test, Y_test, verbose=0)
@@ -235,7 +270,7 @@ def plot_confusion_matrix(cf_matrix):
     plot_title = plt.title('Confusion Matrix', fontsize= 10,fontweight='bold')
 
 
-THRESHOLD = 0.65
+THRESHOLD = 0.5
 
 Y_pred = model.predict(X_val)
 Y_pred_classes = (Y_pred >= THRESHOLD).astype(int)
@@ -256,8 +291,13 @@ print(classification_report(Y_test, Y_test_pred, target_names=['Forged','Authent
 #testing accuracy
 class_names = ['Forged', 'Authentic']
 
+y_test_probs = model.predict(X_test)
+auc_score = roc_auc_score(Y_test, y_test_probs)
+print("ROC-AUC Score:", auc_score)
 
-test_image_path = r"dataset/real/Au_ani_00001.jpg"
+
+
+test_image_path = r"dataset/forged/Tp_D_CNN_M_N_ani00057_ani00055_11149.jpg"
 
 test_image = prepare_image(test_image_path)
 test_image = test_image.reshape(-1, 128, 128, 3)
@@ -265,7 +305,7 @@ test_image = test_image.reshape(-1, 128, 128, 3)
 y_pred = model.predict(test_image)
 pred_value = y_pred[0][0]
 
-THRESHOLD = 0.65
+THRESHOLD = 0.5
 class_names = ['Forged', 'Authentic']
 
 if pred_value >= THRESHOLD:
@@ -277,5 +317,4 @@ else:
 
 print("Prediction:", prediction)
 print(f"Confidence: {confidence:.2f}%")
-
 
