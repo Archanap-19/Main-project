@@ -7,62 +7,84 @@
 </head>
 
 <body
-class="min-h-screen bg-cover bg-center text-white flex items-center justify-center"
-style="background-image: url('/static/images/result.jpg');"
+  class="min-h-screen bg-cover bg-center text-white flex items-center justify-center relative"
+  style="background-image: url('/static/images/result.jpg');"
 >
 
-<div class="w-full max-w-xl bg-white/10 backdrop-blur-xl rounded-3xl p-10 shadow-2xl text-center">
+  <!-- LOGOUT BUTTON (TOP RIGHT) -->
+  <a href="/logout"
+     class="absolute top-6 right-6 z-50">
+    <button
+      class="px-6 py-3 rounded-full
+             bg-red-500 text-white font-semibold
+             hover:scale-110 transition shadow-xl">
+      Logout
+    </button>
+  </a>
 
-  <h2 class="text-4xl font-bold mb-6">
-    🧠 Detection Result
-  </h2>
+  <!-- MAIN CARD -->
+  <div class="w-full max-w-5xl bg-white/10 backdrop-blur-xl rounded-3xl p-10 shadow-2xl text-center">
 
-  <!-- IMAGE -->
-  <img
-    src="{{ url_for('static', filename=image) }}"
-    class="mx-auto rounded-xl shadow-lg mb-6 border border-white/20"
-  >
+    <!-- TITLE -->
+    <h2 class="text-4xl font-bold mb-8">
+      🧠 Detection Result
+    </h2>
 
-  <!-- PREDICTION -->
-  {% if prediction == "Authentic" %}
-    <div class="text-green-400 text-3xl font-bold mb-3">
-      ✅ Authentic Image
+    <!-- IMAGES -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+
+      <!-- ORIGINAL IMAGE -->
+      <div>
+        <h3 class="text-lg font-semibold mb-3">Original Image</h3>
+        <img
+          src="{{ url_for('static', filename=image) }}"
+          class="w-full h-[350px] object-cover rounded-xl shadow-lg border border-white/20"
+          alt="Original Image"
+        >
+      </div>
+
+      <!-- CEA IMAGE -->
+      <div>
+        <h3 class="text-lg font-semibold mb-3">CEA Image</h3>
+        <img
+          src="{{ url_for('static', filename=cea_image) }}"
+          class="w-full h-[350px] object-cover rounded-xl shadow-lg border border-white/20"
+          alt="CEA Image"
+        >
+      </div>
+
     </div>
-  {% else %}
-    <div class="text-red-400 text-3xl font-bold mb-3">
-      🚨 Forged Image
+
+    <!-- PREDICTION -->
+    {% if prediction == "Authentic" %}
+      <div class="text-green-400 text-3xl font-bold mb-3">
+        ✅ Authentic Image
+      </div>
+    {% else %}
+      <div class="text-red-400 text-3xl font-bold mb-3">
+        🚨 Forged Image
+      </div>
+    {% endif %}
+
+    <!-- CONFIDENCE -->
+    <p class="text-xl text-gray-200 mb-8">
+      Confidence: <span class="font-semibold">{{ confidence }}</span>
+    </p>
+
+    <!-- ACTION BUTTONS -->
+    <div class="flex justify-center gap-6">
+      <a href="/upload">
+        <button
+          class="px-6 py-3 rounded-full
+                 bg-cyan-500 text-black font-semibold
+                 hover:scale-105 transition">
+          Upload Another
+        </button>
+      </a>
+
     </div>
-  {% endif %}
-
-  <!-- CONFIDENCE -->
-  <p class="text-xl text-gray-200 mb-6">
-    Confidence: <span class="font-semibold">{{ confidence }}</span>
-  </p>
-
-  <!-- ACTION BUTTONS -->
-  <div class="flex justify-center gap-6">
-
-    <a href="/upload">
-      <button
-        class="px-6 py-3 rounded-full
-               bg-cyan-500 text-black font-semibold
-               hover:scale-105 transition">
-        Upload Another
-      </button>
-    </a>
-
-    <a href="/">
-      <button
-        class="px-6 py-3 rounded-full
-               bg-white/10 text-white font-semibold
-               hover:bg-white/20 transition">
-        Home
-      </button>
-    </a>
 
   </div>
-
-</div>
 
 </body>
 </html>
