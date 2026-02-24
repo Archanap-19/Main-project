@@ -25,7 +25,7 @@ from tqdm.notebook import tqdm
 
 
 
-def convert_to_cea_image(path, qualities=[95, 85, 75]):
+def convert_to_cea_image(path, qualities=[95,90, 85,80,75]):
     original = Image.open(path).convert("RGB")
 
     cea_maps = []
@@ -182,12 +182,12 @@ model.summary()
 
 #model training
 
-epochs = 15
+epochs = 25
 batch_size = 32
 
 
 #optimizer
-init_lr = 1e-4  # learning rate
+init_lr = 5e-5  # learning rate
 
 optimizer = Adam(learning_rate=init_lr)
 
@@ -202,7 +202,7 @@ model.compile(
 
 #Early Stopping
 early_stopping = EarlyStopping(
-    monitor='val_accuracy',
+    monitor='val_loss',
     patience=6,
     restore_best_weights=True
 )
