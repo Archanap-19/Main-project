@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>About | ForgeXplorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Animations -->
+  <style>
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes glow {
+      0% { box-shadow: 0 0 10px #22d3ee; }
+      50% { box-shadow: 0 0 25px #a855f7; }
+      100% { box-shadow: 0 0 10px #22d3ee; }
+    }
+
+    .fade-up {
+      animation: fadeUp 1s ease forwards;
+    }
+
+    .delay-1 { animation-delay: 0.3s; }
+    .delay-2 { animation-delay: 0.6s; }
+    .delay-3 { animation-delay: 0.9s; }
+
+    .glow-box {
+      animation: glow 3s infinite;
+    }
+  </style>
+</head>
+
+<body
+  class="min-h-screen bg-cover bg-center text-white"
+  style="background-image: url('static/images/about.jpg');"
+>
+
+<div class="max-w-6xl mx-auto py-20 px-6">
+
+  <!-- TITLE -->
+  <h1 class="text-5xl font-bold text-center mb-10 fade-up">
+     About <span class="text-cyan-400">ForgeXplorer</span>
+  </h1>
+
+  <!-- INTRO -->
+  <p class="text-lg text-gray-300 text-center max-w-4xl mx-auto mb-14 fade-up delay-1">
+    <strong>ForgeXplorer</strong> is a web-based digital image forensic system
+    that detects image forgery using
+    <span class="text-cyan-400 font-semibold">Compression Error Analysis (CEA)</span>
+    and a
+    <span class="text-purple-400 font-semibold">Convolutional Neural Network (CNN)</span>.
+  </p>
+
+  <!-- GRID SECTION -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+    <!-- OBJECTIVE -->
+    <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-xl fade-up delay-2 hover:scale-105 transition">
+      <h2 class="text-2xl font-semibold mb-4 text-cyan-400">
+         Project Objective
+      </h2>
+      <p class="text-gray-300 leading-relaxed">
+        To automatically identify whether a digital image is
+        <strong>Authentic</strong> or <strong>Forged</strong> by analyzing
+        compression inconsistencies introduced by image manipulation techniques
+        such as copy-move and splicing.
+      </p>
+    </div>
+
+    <!-- TECHNOLOGY -->
+    <div class="bg-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-xl fade-up delay-3 hover:scale-105 transition">
+      <h2 class="text-2xl font-semibold mb-4 text-purple-400">
+         Technologies Used
+      </h2>
+      <ul class="list-disc list-inside text-gray-300 space-y-2">
+        <li>Compression Error Analysis (CEA)</li>
+        <li>Convolutional Neural Network (CNN)</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="mt-16 bg-white/10 backdrop-blur-xl rounded-2xl p-10 shadow-xl fade-up delay-2 glow-box">
+    <h2 class="text-3xl font-semibold mb-6 text-center text-green-400">
+      ⚙️ How the System Works
+    </h2>
+
+    <ol class="list-decimal list-inside text-gray-300 space-y-3 max-w-4xl mx-auto">
+      <li>User uploads a digital image.</li>
+      <li>Image undergoes Compression Error Analysis (CEA).</li>
+      <li>CNN extracts forensic features.</li>
+      <li>Model predicts Authentic or Forged.</li>
+      <li>Confidence score is generated.</li>
+    </ol>
+  </div>
+
+
+<div class="text-center mt-4">
+      <a href="/" class="text-gray-400 hover:text-white text-lg">
+        ← Back to Home
+      </a>
+    </div>
+
+
+</body>
+</html>
