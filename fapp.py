@@ -209,6 +209,9 @@ def cea_page(filename):
 # -----------------------------
 # RESULT
 # -----------------------------
+# -----------------------------
+# RESULT
+# -----------------------------
 @app.route("/result/<filename>")
 def result(filename):
 
@@ -218,19 +221,40 @@ def result(filename):
     cea_name = os.path.splitext(filename)[0] + "_cea.jpg"
     cea_path = os.path.join(CEA_FOLDER, cea_name)
 
+    # Load CEA image
     img = Image.open(cea_path).resize(IMAGE_SIZE)
-    img = np.array(img) / 255.0
-    img = img.reshape(1, 128, 128, 3)
+    img_array = np.array(img) / 255.0
+    img_array = img_array.reshape(1, 128, 128, 3)
 
-    pred = model.predict(img)[0][0]
+    # CNN prediction
+    pred = model.predict(img_array)[0][0]
 
+    # Classification
     if pred >= THRESHOLD:
         label = "Authentic"
         confidence = pred * 100
+        forgery_type = "None"
+
     else:
         label = "Forged"
         confidence = (1 - pred) * 100
 
+        # Detect forgery type from CEA image
+        cea_array = np.array(img)
+        gray = np.mean(cea_array, axis=2)
+
+        threshold = np.mean(gray) + 2 * np.std(gray)
+        mask = gray > threshold
+        artifact_pixels = np.sum(mask)
+
+        if artifact_pixels < 500:
+            forgery_type = "Possible Copy-Move"
+        elif artifact_pixels < 2000:
+            forgery_type = "Possible Splicing"
+        else:
+            forgery_type = "Complex Manipulation"
+
+    # Save history
     history_data.append({
         "email": session.get("user_email"),
         "image": filename,
@@ -245,6 +269,7 @@ def result(filename):
         "result.html",
         prediction=label,
         confidence=f"{confidence:.2f}%",
+        forgery_type=forgery_type,
         image=f"uploads/{filename}",
         cea_image=f"cea/{cea_name}"
     )
