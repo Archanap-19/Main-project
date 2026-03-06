@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Detection History</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-stone-700 text-white p-10">
+
+<h1 class="text-3xl mb-6">Detection History</h1>
+
+<table class="table-auto border border-gray-500 w-full text-center">
+
+<tr class="bg-gray-700">
+<th class="p-3">User Email</th>
+<th class="p-3">Image</th>
+<th class="p-3">Result</th>
+<th class="p-3">Confidence</th>
+</tr>
+
+{% for item in history %}
+
+<tr class="border border-gray-600">
+<td class="p-3">{{ item.email }}</td>
+<td class="p-3">{{ item.image }}</td>
+<td class="p-3">{{ item.result }}</td>
+<td class="p-3">{{ item.confidence }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+  <!-- BACK TO HOME -->
+    <div class="text-center mt-6">
+      <a href="/" class="text-gray-400 hover:text-white text-lg font-bold">
+        🏠Back to Home
+      </a>
+    </div>
+</body>
+</html>
