@@ -11,6 +11,29 @@ class="min-h-screen bg-cover bg-center bg-no-repeat text-white"
 style="background-image: url('/static/images/robot.jpg');"
 >
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div id="flash-message"
+     class="absolute top-10 left-1/2 transform -translate-x-1/2 space-y-2 z-50">
+
+{% for category, message in messages %}
+<div class="px-6 py-3 rounded-lg shadow-lg
+{% if category == 'success' %}
+bg-green-500
+{% else %}
+bg-red-500
+{% endif %}
+text-white font-semibold text-center">
+
+{{ message }}
+
+</div>
+{% endfor %}
+
+</div>
+{% endif %}
+{% endwith %}
+
 <!-- NAVBAR -->
 <nav class="flex justify-between items-center px-10 py-6 text-white">
 
@@ -23,6 +46,14 @@ style="background-image: url('/static/images/robot.jpg');"
   <ul class="flex space-x-4 text-lg font-medium">
 
     <li>
+      <a href="/history"
+         class="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md
+                hover:bg-cyan-500 hover:text-black transition duration-300">
+        History
+      </a>
+    </li>
+
+    <li>
       <a href="/about"
          class="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md
                 hover:bg-cyan-500 hover:text-black transition duration-300">
@@ -30,14 +61,13 @@ style="background-image: url('/static/images/robot.jpg');"
       </a>
     </li>
 
-
     <li>
-      <a href="/"
-         class="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md
-                hover:bg-cyan-500 hover:text-black transition duration-300">
-        Home
-      </a>
-    </li>
+<a href="/admin"
+class="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md
+hover:bg-red-500 hover:text-white transition duration-300">
+admin
+</a>
+</li>
 
     {% if session.get("logged_in") %}
       <!-- LOGOUT (when logged in) -->
@@ -119,5 +149,13 @@ style="background-image: url('/static/images/robot.jpg');"
 }
 </style>
 
+<script>
+setTimeout(function(){
+let flash = document.getElementById("flash-message");
+if(flash){
+flash.style.display="none";
+}
+},2000);
+</script>
 </body>
 </html>
