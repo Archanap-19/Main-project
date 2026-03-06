@@ -11,9 +11,8 @@
   style="background-image: url('/static/images/result.jpg');"
 >
 
-  <!-- LOGOUT BUTTON (TOP RIGHT) -->
-  <a href="/logout"
-     class="absolute top-6 right-6 z-50">
+  <!-- LOGOUT BUTTON -->
+  <a href="/logout" class="absolute top-6 right-6 z-50">
     <button
       class="px-6 py-3 rounded-full
              bg-red-500 text-white font-semibold
@@ -67,12 +66,18 @@
     {% endif %}
 
     <!-- CONFIDENCE -->
-    <p class="text-xl text-gray-200 mb-8">
+    <p class="text-xl text-gray-200 mb-3">
       Confidence: <span class="font-semibold">{{ confidence }}</span>
     </p>
-    
 
-    <!-- ACTION BUTTONS -->
+    <!-- FORGERY TYPE -->
+    {% if prediction == "Forged" %}
+    <p class="text-xl text-yellow-300 mb-8">
+      Forgery Type: <span class="font-semibold">{{ forgery_type }}</span>
+    </p>
+    {% endif %}
+
+    <!-- ACTION BUTTON -->
     <div class="flex justify-center gap-6">
       <a href="/upload">
         <button
@@ -82,11 +87,9 @@
           Upload Another
         </button>
       </a>
-
     </div>
 
   </div>
-  
 
 </body>
 </html>
