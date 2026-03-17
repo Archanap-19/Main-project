@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 import json
@@ -14,11 +13,17 @@ app = Flask(__name__)
 app.secret_key = "forgexplorer_secret_key"
 
 # -----------------------------
+# ADMIN CONFIG
+# -----------------------------
+ADMIN_EMAIL = "admin@gmail.com"
+ADMIN_PASSWORD = "admin123"
+
+# -----------------------------
 # CONFIG
 # -----------------------------
 UPLOAD_FOLDER = "static/uploads"
 CEA_FOLDER = "static/cea"
-MODEL_PATH = "train_model.h5"
+MODEL_PATH = "training_model.h5"
 IMAGE_SIZE = (128, 128)
 THRESHOLD = 0.5
 HISTORY_FILE = "history.json"
@@ -52,7 +57,7 @@ def about():
     return render_template("about.html")
 
 # -----------------------------
-# LOGIN
+# LOGIN (USER + ADMIN)
 # -----------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -62,6 +67,19 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
 
+        # 🔐 ADMIN LOGIN
+        if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
+            session.clear()
+            session["admin_logged_in"] = True
+
+            session.pop('_flashes', None)
+            flash("Login Successful!", "success")
+
+            session["welcome_admin"] = True   # 🔥 show on dashboard
+
+            return redirect(url_for("admin_dashboard"))
+
+        # 👤 USER LOGIN
         users_file = "users.json"
 
         if os.path.exists(users_file):
@@ -73,12 +91,17 @@ def login():
         for user in users:
             if user["email"] == email and user["password"] == password:
 
+                session.clear()
                 session["logged_in"] = True
                 session["user_email"] = email
 
+                session.pop('_flashes', None)
                 flash("Login Successful!", "success")
+
                 return redirect(url_for("home"))
 
+        # ❌ INVALID LOGIN
+        session.pop('_flashes', None)
         flash("Invalid Email or Password!", "error")
 
     return render_template("login.html")
@@ -102,6 +125,11 @@ def register():
         else:
             users = []
 
+        for user in users:
+            if user["email"] == email:
+                flash("User already exists!", "error")
+                return redirect(url_for("register"))
+
         users.append({
             "email": email,
             "password": password
@@ -116,10 +144,18 @@ def register():
     return render_template("register.html")
 
 # -----------------------------
-# ADMIN USER LIST
+# ADMIN DASHBOARD
 # -----------------------------
-@app.route("/admin")
-def users():
+@app.route("/admin-dashboard")
+def admin_dashboard():
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("login"))
+
+    # 🔥 SHOW WELCOME ONCE
+    if session.get("welcome_admin"):
+        flash("Welcome Admin 👋", "success")
+        session.pop("welcome_admin", None)
 
     users_file = "users.json"
 
@@ -129,13 +165,29 @@ def users():
     else:
         users = []
 
-    return render_template("admin.html", users=users)
+    total_users = len(users)
+    total_images = len(history_data)
+
+    real_count = sum(1 for h in history_data if h["result"] == "Authentic")
+    fake_count = sum(1 for h in history_data if h["result"] == "Forged")
+
+    return render_template(
+        "admin.html",
+        users=users,
+        total_users=total_users,
+        total_images=total_images,
+        real_count=real_count,
+        fake_count=fake_count
+    )
 
 # -----------------------------
 # DELETE USER
 # -----------------------------
 @app.route("/delete_user/<email>")
 def delete_user(email):
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("login"))
 
     users_file = "users.json"
 
@@ -152,7 +204,19 @@ def delete_user(email):
 
     flash("User deleted successfully!", "success")
 
-    return redirect(url_for("users"))
+    return redirect(url_for("admin_dashboard"))
+
+# -----------------------------
+# ADMIN LOGOUT
+# -----------------------------
+@app.route("/admin-logout")
+def admin_logout():
+    session.pop("admin_logged_in", None)
+
+    session.pop('_flashes', None)
+    flash("Logged out successfully!", "success")
+
+    return redirect(url_for("login"))
 
 # -----------------------------
 # UPLOAD IMAGE
@@ -170,7 +234,6 @@ def upload():
         file = request.files.get("image")
 
         if file:
-
             base = os.path.splitext(file.filename)[0]
             image_filename = base + ".jpg"
 
@@ -209,9 +272,6 @@ def cea_page(filename):
 # -----------------------------
 # RESULT
 # -----------------------------
-# -----------------------------
-# RESULT
-# -----------------------------
 @app.route("/result/<filename>")
 def result(filename):
 
@@ -221,25 +281,20 @@ def result(filename):
     cea_name = os.path.splitext(filename)[0] + "_cea.jpg"
     cea_path = os.path.join(CEA_FOLDER, cea_name)
 
-    # Load CEA image
     img = Image.open(cea_path).resize(IMAGE_SIZE)
     img_array = np.array(img) / 255.0
     img_array = img_array.reshape(1, 128, 128, 3)
 
-    # CNN prediction
     pred = model.predict(img_array)[0][0]
 
-    # Classification
     if pred >= THRESHOLD:
         label = "Authentic"
         confidence = pred * 100
         forgery_type = "None"
-
     else:
         label = "Forged"
         confidence = (1 - pred) * 100
 
-        # Detect forgery type from CEA image
         cea_array = np.array(img)
         gray = np.mean(cea_array, axis=2)
 
@@ -254,7 +309,6 @@ def result(filename):
         else:
             forgery_type = "Complex Manipulation"
 
-    # Save history
     history_data.append({
         "email": session.get("user_email"),
         "image": filename,
@@ -277,20 +331,80 @@ def result(filename):
 # -----------------------------
 # HISTORY
 # -----------------------------
+# -----------------------------
+# HISTORY (ADMIN + USER)
+# -----------------------------
 @app.route("/history")
 def history():
-    return render_template("history.html", history=history_data)
+
+    # 🔐 ADMIN → see all history
+    if session.get("admin_logged_in"):
+        return render_template("history.html", history=history_data)
+
+    # 👤 USER → see only their history
+    elif session.get("logged_in"):
+        user_email = session.get("user_email")
+
+        user_history = [h for h in history_data if h["email"] == user_email]
+
+        return render_template("history.html", history=user_history)
+
+    # ❌ Not logged in
+    return redirect(url_for("login"))
+
+# -----------------------------
+# DELETE HISTORY ITEM
+# -----------------------------
+@app.route("/delete_history/<int:index>")
+def delete_history(index):
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("login"))
+
+    if 0 <= index < len(history_data):
+        history_data.pop(index)
+
+        with open(HISTORY_FILE, "w") as f:
+            json.dump(history_data, f, indent=4)
+
+        flash("History item deleted!", "success")
+
+    return redirect(url_for("history"))
+
+
+# -----------------------------
+# DELETE MULTIPLE HISTORY
+# -----------------------------
+@app.route("/delete_multiple_history")
+def delete_multiple_history():
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("login"))
+
+    indexes = request.args.get("indexes")
+
+    if indexes:
+        indexes = list(map(int, indexes.split(",")))
+
+        # delete in reverse order (important!)
+        for i in sorted(indexes, reverse=True):
+            if 0 <= i < len(history_data):
+                history_data.pop(i)
+
+        with open(HISTORY_FILE, "w") as f:
+            json.dump(history_data, f, indent=4)
+
+        flash("Selected records deleted!", "success")
+
+    return redirect(url_for("history"))
 
 # -----------------------------
 # LOGOUT
 # -----------------------------
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     flash("Logged out successfully!", "success")
-
     return redirect(url_for("home"))
 
 # -----------------------------
@@ -298,4 +412,3 @@ def logout():
 # -----------------------------
 if __name__ == "__main__":
     app.run(debug=True)
-
