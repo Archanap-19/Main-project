@@ -14,18 +14,24 @@
 <!-- FLASH MESSAGE -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div class="absolute top-10 left-1/2 transform -translate-x-1/2">
+    <div id="toast-container" class="fixed top-5 right-5 space-y-3 z-50">
+
       {% for category, message in messages %}
-        <div class="px-6 py-3 rounded-lg shadow-lg mb-2
+        <div class="toast px-6 py-3 rounded-lg shadow-lg text-white font-semibold
+        transform translate-x-full opacity-0 transition-all duration-500
+
         {% if category == 'success' %}
           bg-green-500
-        {% else %}
+        {% elif category == 'error' %}
           bg-red-500
+        {% else %}
+          bg-blue-500
         {% endif %}
-        text-white font-semibold text-center">
+        ">
           {{ message }}
         </div>
       {% endfor %}
+
     </div>
   {% endif %}
 {% endwith %}
@@ -96,7 +102,7 @@
   <!-- BACK TO HOME -->
   <div class="text-center mt-6">
     <a href="/" class="text-gray-400 hover:text-white text-lg font-bold">
-       🏠Back to Home
+       Back to Home
     </a>
   </div>
 
@@ -105,4 +111,22 @@
 
 
 </body>
+
+<script>
+  const toasts = document.querySelectorAll(".toast");
+
+  toasts.forEach((toast, index) => {
+    setTimeout(() => {
+      toast.classList.remove("translate-x-full", "opacity-0");
+    }, index * 200);
+
+    setTimeout(() => {
+      toast.classList.add("translate-x-full", "opacity-0");
+    }, 2000 + index * 200);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 2500 + index * 200);
+  });
+</script>
 </html>
