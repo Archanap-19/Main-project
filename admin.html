@@ -1,45 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Users</title>
+<title>Admin Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-900 text-white p-10">
+<body
+class="min-h-screen bg-cover bg-center text-white p-10"
+style="background-image: url('/static/images/log.jpg');"
+>
 
-<h1 class="text-3xl mb-6">Registered Users</h1>
+<!-- FLASH TOAST -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="fixed top-5 right-5 space-y-3 z-50">
+      {% for category, message in messages %}
+        <div class="toast px-6 py-3 rounded-lg shadow-lg text-white font-semibold
+        transform translate-x-full opacity-0 transition-all duration-500
 
-<table class="table-auto border border-gray-500 w-full text-center">
+        {% if category == 'success' %}
+          bg-green-500
+        {% elif category == 'error' %}
+          bg-red-500
+        {% endif %}
+        ">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
-<tr class="bg-gray-700">
-<th class="p-3">Email</th>
-<th class="p-3">Action</th>
-</tr>
+<!-- HEADER -->
+<div class="flex justify-between items-center mb-10">
 
-{% for user in users %}
+  <h1 class="text-4xl font-extrabold text-cyan-400 tracking-wide">
+    ⚡ Admin Dashboard
+  </h1>
 
-<tr class="border border-gray-600">
-<td class="p-3">{{ user.email }}</td>
+  <div class="flex gap-4">
 
-<td class="p-3">
-<a href="/delete_user/{{ user.email }}"
-class="bg-red-500 px-4 py-2 rounded hover:bg-red-700">
-Delete
-</a>
-</td>
-
-</tr>
-
-{% endfor %}
-
-</table>
-
-  <!-- BACK TO HOME -->
-  <div class="text-center mt-6">
-    <a href="/" class="text-gray-400 hover:text-white text-lg font-bold">
-      🏠Back to Home
+    <a href="/history"
+       class="px-5 py-2 rounded-full bg-white/10 backdrop-blur-md
+              hover:bg-cyan-500 hover:text-black transition duration-300 shadow-lg">
+      📊 History
     </a>
+
+    <a href="/admin-logout"
+       class="px-5 py-2 rounded-full bg-red-500 hover:bg-red-700 transition shadow-lg">
+      🚪 Logout
+    </a>
+
   </div>
+
+</div>
+
+<!-- STATS -->
+<div class="grid grid-cols-4 gap-6 mb-10">
+
+  <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl text-center
+              hover:scale-105 transition duration-300 shadow-xl">
+    <h2 class="text-gray-300">Total Users</h2>
+    <p class="text-4xl font-bold text-cyan-400 mt-2">{{ total_users }}</p>
+  </div>
+
+  <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl text-center
+              hover:scale-105 transition duration-300 shadow-xl">
+    <h2 class="text-gray-300">Images Processed</h2>
+    <p class="text-4xl font-bold text-purple-400 mt-2">{{ total_images }}</p>
+  </div>
+
+  <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl text-center
+              hover:scale-105 transition duration-300 shadow-xl">
+    <h2 class="text-gray-300">Authentic</h2>
+    <p class="text-4xl font-bold text-green-400 mt-2">{{ real_count }}</p>
+  </div>
+
+  <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl text-center
+              hover:scale-105 transition duration-300 shadow-xl">
+    <h2 class="text-gray-300">Forged</h2>
+    <p class="text-4xl font-bold text-red-400 mt-2">{{ fake_count }}</p>
+  </div>
+
+</div>
+
+<!-- USERS TABLE -->
+<div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl shadow-2xl">
+
+  <h2 class="text-2xl mb-6 text-cyan-300">👤 Registered Users</h2>
+
+  <table class="w-full text-center">
+
+    <tr class="bg-white/20 text-lg">
+      <th class="p-4">Email</th>
+      <th class="p-4">Action</th>
+    </tr>
+
+    {% for user in users %}
+    <tr class="border-t border-white/20 hover:bg-white/10 transition">
+
+      <td class="p-4 text-gray-200">{{ user.email }}</td>
+
+      <td class="p-4">
+        <a href="/delete_user/{{ user.email }}"
+           onclick="return confirm('Delete this user?')"
+           class="px-4 py-2 rounded-full bg-red-500 hover:bg-red-700 transition shadow">
+           🗑 Delete
+        </a>
+      </td>
+
+    </tr>
+    {% endfor %}
+
+  </table>
+
+</div>
+
+<!-- SCRIPT -->
+<script>
+  const toasts = document.querySelectorAll(".toast");
+
+  toasts.forEach((toast, index) => {
+    setTimeout(() => {
+      toast.classList.remove("translate-x-full", "opacity-0");
+    }, index * 200);
+
+    setTimeout(() => {
+      toast.classList.add("translate-x-full", "opacity-0");
+    }, 2000 + index * 200);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 2500 + index * 200);
+  });
+</script>
 
 </body>
 </html>
