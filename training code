@@ -16,11 +16,17 @@ from sklearn.metrics import confusion_matrix, classification_report, roc_auc_sco
 
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPool2D, Dropout, GlobalAveragePooling2D, Dense
+from keras.layers import BatchNormalization
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 
 from PIL import Image, ImageChops, ImageEnhance
 from tqdm.notebook import tqdm
+
+# VGG16 imports
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
 
 
 
