@@ -87,8 +87,16 @@
           Upload Another
         </button>
       </a>
-    </div>
 
+<a href="{{ url_for('download_report', filename=filename) }}">
+  <button
+    class="px-6 py-3 rounded-full
+           bg-yellow-400 text-black font-semibold
+           hover:scale-105 transition">
+    Download Report
+  </button>
+</a>
+ 
   </div>
 
 </body>
