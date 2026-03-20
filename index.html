@@ -46,28 +46,12 @@ text-white font-semibold text-center">
   <ul class="flex space-x-4 text-lg font-medium">
 
     <li>
-      <a href="/history"
-         class="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md
-                hover:bg-cyan-500 hover:text-black transition duration-300">
-        History
-      </a>
-    </li>
-
-    <li>
       <a href="/about"
          class="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md
                 hover:bg-cyan-500 hover:text-black transition duration-300">
         About us
       </a>
     </li>
-
-    <li>
-<a href="/admin"
-class="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md
-hover:bg-red-500 hover:text-white transition duration-300">
-admin
-</a>
-</li>
 
     {% if session.get("logged_in") %}
       <!-- LOGOUT (when logged in) -->
@@ -93,10 +77,11 @@ admin
 </nav>
 
 <!-- HERO SECTION -->
-<section class="flex items-center justify-between px-16 mt-20">
+<section class="flex items-center px-16 mt-20">
 
-  <!-- LEFT TEXT -->
+  <!-- LEFT TEXT + BUTTON -->
   <div class="text-white max-w-xl space-y-6 animate-fade-in">
+
     <h2 class="text-7xl font-extrabold leading-tight">
       <span class="text-cyan-300">ForgeXplorer</span>
     </h2>
@@ -105,35 +90,34 @@ admin
       Upload any image and verify whether it is authentic or forged
       with confidence score.
     </p>
-  </div>
 
-  <!-- RIGHT BUTTON -->
-  <div class="relative">
-    <div class="absolute inset-0 rounded-full bg-cyan-500 blur-3xl opacity-60"></div>
+    <!-- BUTTON (moved here) -->
+    <div class="relative mt-6 w-fit">
+      <div class="absolute inset-0 rounded-full bg-cyan-500 blur-3xl opacity-60"></div>
 
-    {% if session.get("logged_in") %}
-      <!-- Logged in → go to upload -->
-      <a href="/upload">
-        <button
-          class="relative px-11 py-5 rounded-full
-          bg-gradient-to-r from-cyan-400 to-purple-500
-          text-white font-semibold text-lg
-          hover:scale-110 transition duration-300 shadow-xl">
-          Start Detection
-        </button>
-      </a>
-    {% else %}
-      <!-- Not logged in → go to login -->
-      <a href="/login">
-        <button
-          class="relative px-11 py-5 rounded-full
-          bg-gradient-to-r from-cyan-400 to-purple-500
-          text-white font-semibold text-lg
-          hover:scale-110 transition duration-300 shadow-xl">
-          Start Detection
-        </button>
-      </a>
-    {% endif %}
+      {% if session.get("logged_in") %}
+        <a href="/upload">
+          <button
+            class="relative px-11 py-5 rounded-full
+            bg-gradient-to-r from-cyan-400 to-purple-500
+            text-white font-semibold text-lg
+            hover:scale-110 transition duration-300 shadow-xl">
+            Start Detection
+          </button>
+        </a>
+      {% else %}
+        <a href="/login">
+          <button
+            class="relative px-11 py-5 rounded-full
+            bg-gradient-to-r from-cyan-400 to-purple-500
+            text-white font-semibold text-lg
+            hover:scale-110 transition duration-300 shadow-xl">
+            Start Detection
+          </button>
+        </a>
+      {% endif %}
+    </div>
+
   </div>
 
 </section>
