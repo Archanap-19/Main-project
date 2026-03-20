@@ -148,32 +148,41 @@ class_weights = dict(enumerate(class_weights))
 print("Class Weights:", class_weights)
 
 
-#model architecture
+
+# model architecture
 def build_model():
     model = Sequential()
 
     model.add(Conv2D(64, (5,5), activation='relu', input_shape=(128,128,3)))
+    model.add(BatchNormalization())
     model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(BatchNormalization())
     model.add(MaxPool2D((2,2)))
-    model.add(Dropout(0.25))   # ← ADD HERE
+    model.add(Dropout(0.25))
 
     model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(BatchNormalization())
     model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(BatchNormalization())
     model.add(MaxPool2D((2,2)))
-    model.add(Dropout(0.25))   # ← ADD HERE
+    model.add(Dropout(0.25))
 
     model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(BatchNormalization())
     model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(BatchNormalization())
     model.add(MaxPool2D((2,2)))
-    model.add(Dropout(0.25))   # ← ADD HERE
+    model.add(Dropout(0.25))
 
     model.add(Conv2D(32, (5,5), activation='relu'))
+    model.add(BatchNormalization())
     model.add(MaxPool2D((2,2)))
 
     model.add(GlobalAveragePooling2D())
     model.add(Dense(1, activation='sigmoid'))
 
     return model
+
 
 
 model = build_model()
@@ -297,24 +306,38 @@ print("ROC-AUC Score:", auc_score)
 
 
 
-test_image_path = r"dataset/forged/Tp_D_CNN_M_N_ani00057_ani00055_11149.jpg"
+#training of VGG16
 
-test_image = prepare_image(test_image_path)
-test_image = test_image.reshape(-1, 128, 128, 3)
+base_model = VGG16(
+    weights='imagenet',
+    include_top=False,
+    input_shape=(128,128,3)
+)
 
-y_pred = model.predict(test_image)
-pred_value = y_pred[0][0]
+for layer in base_model.layers:
+    layer.trainable = False
 
-THRESHOLD = 0.5
-class_names = ['Forged', 'Authentic']
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dense(128, activation='relu')(x)
+output = Dense(1, activation='sigmoid')(x)
 
-if pred_value >= THRESHOLD:
-    prediction = "Authentic"
-    confidence = pred_value * 100
-else:
-    prediction = "Forged"
-    confidence = (1 - pred_value) * 100
+vgg_model = Model(inputs=base_model.input, outputs=output)
 
-print("Prediction:", prediction)
-print(f"Confidence: {confidence:.2f}%")
+vgg_model.compile(
+    optimizer=Adam(learning_rate=1e-5),
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
 
+history_vgg = vgg_model.fit(
+    datagen.flow(X_train, Y_train, batch_size=32),
+    epochs=20,
+    validation_data=(X_val, Y_val),
+    class_weight=class_weights
+)
+
+loss_vgg, acc_vgg = vgg_model.evaluate(X_test, Y_test)
+
+print("CNN Accuracy:", acc * 100)
+print("VGG16 Accuracy:", acc_vgg * 100)
